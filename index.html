@@ -291,6 +291,10 @@
       transition: color 0.3s ease;
     }
     .char-counter.warning { color: var(--error); }
+
+    /* ✅ NEW: small helper for status color */
+    .status-ok { color: var(--success); }
+    .status-bad { color: var(--error); }
   </style>
 </head>
 
@@ -318,28 +322,9 @@
       <div class="form-container p-6 md:p-10">
         <form id="contactForm" novalidate>
 
-          <!-- ✅ NEW: API URL -->
-          <div class="mb-8 pb-8 border-b border-[var(--border-subtle)] animate-in delay-1">
-            <label for="apiBaseUrl" class="text-label block mb-3">API Endpoint (Render URL)</label>
-            <div class="input-wrapper relative">
-              <div class="icon-container">
-                <i data-lucide="link" class="w-5 h-5"></i>
-              </div>
-              <input
-                type="url"
-                id="apiBaseUrl"
-                class="input-field"
-                placeholder="https://your-backend.onrender.com"
-                autocomplete="off"
-              >
-            </div>
-            <p class="mt-3 text-xs text-[var(--fg-muted)] font-mono">
-              Example: https://report-telegram-api.onrender.com (no trailing slash)
-            </p>
-          </div>
+          <!-- ✅ API input removed (hidden from users) -->
 
-          <!-- Anonymous Toggle -->
-          <div class="mb-8 pb-8 border-b border-[var(--border-subtle)] animate-in delay-2">
+          <div class="mb-8 pb-8 border-b border-[var(--border-subtle)] animate-in delay-1">
             <label class="toggle-container group">
               <input type="checkbox" id="anonymousToggle" class="toggle-input" aria-describedby="anonymousDesc">
               <div class="toggle-track" aria-hidden="true"></div>
@@ -355,7 +340,7 @@
 
           <div id="personalFields" class="space-y-6 mb-6">
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div class="field-group animate-in delay-3">
+              <div class="field-group animate-in delay-2">
                 <label for="firstName" class="text-label block mb-3">First Name</label>
                 <div class="input-wrapper relative">
                   <div class="icon-container"><i data-lucide="user" class="w-5 h-5"></i></div>
@@ -363,7 +348,7 @@
                 </div>
               </div>
 
-              <div class="field-group animate-in delay-4">
+              <div class="field-group animate-in delay-3">
                 <label for="surname" class="text-label block mb-3">Surname</label>
                 <div class="input-wrapper relative">
                   <div class="icon-container"><i data-lucide="user" class="w-5 h-5"></i></div>
@@ -372,7 +357,7 @@
               </div>
             </div>
 
-            <div class="field-group animate-in delay-5">
+            <div class="field-group animate-in delay-4">
               <label for="group" class="text-label block mb-3">Group / Cohort</label>
               <div class="input-wrapper relative">
                 <div class="icon-container"><i data-lucide="users" class="w-5 h-5"></i></div>
@@ -389,7 +374,7 @@
             </div>
           </div>
 
-          <div class="animate-in delay-6 mb-8">
+          <div class="animate-in delay-5 mb-8">
             <label for="message" class="text-label block mb-3">Message</label>
             <div class="input-wrapper relative">
               <div class="icon-container textarea-icon"><i data-lucide="message-square" class="w-5 h-5"></i></div>
@@ -408,7 +393,7 @@
             </div>
           </div>
 
-          <div class="animate-in delay-7">
+          <div class="animate-in delay-6">
             <button type="submit" class="submit-btn" id="submitBtn">
               <i data-lucide="send" class="w-5 h-5"></i>
               <span>Transmit Message</span>
@@ -441,11 +426,12 @@
   </div>
 
   <script>
+    // ✅ HARDCODE your backend here
+    const API_BASE_URL = "https://repo3-17oc.onrender.com";
+
     lucide.createIcons();
 
     const form = document.getElementById('contactForm');
-    const apiBaseUrl = document.getElementById('apiBaseUrl');
-
     const anonymousToggle = document.getElementById('anonymousToggle');
     const personalFields = document.getElementById('personalFields');
     const firstNameInput = document.getElementById('firstName');
@@ -461,17 +447,10 @@
 
     const fieldGroups = personalFields.querySelectorAll('.field-group');
 
-    // ✅ Save API URL to localStorage
-    apiBaseUrl.value = localStorage.getItem("REPORT_API_BASE_URL") || "";
-    apiBaseUrl.addEventListener("input", () => {
-      localStorage.setItem("REPORT_API_BASE_URL", apiBaseUrl.value.trim());
-    });
-
-    function normalizeBaseUrl(u) {
-      u = (u || "").trim();
-      if (!u) return "";
-      if (u.endsWith("/")) u = u.slice(0, -1);
-      return u;
+    function showStatus(message, isError = false) {
+      statusMessage.textContent = message;
+      statusMessage.className = `mt-6 text-center font-mono text-sm ${isError ? 'status-bad' : 'status-ok'}`;
+      statusMessage.classList.remove('hidden');
     }
 
     anonymousToggle.addEventListener('change', function() {
@@ -510,13 +489,6 @@
       let isValid = true;
       const errors = [];
 
-      // ✅ API URL required
-      const base = normalizeBaseUrl(apiBaseUrl.value);
-      if (!base.startsWith("http://") && !base.startsWith("https://")) {
-        errors.push('API Endpoint must start with https://');
-        isValid = false;
-      }
-
       if (!anonymousToggle.checked) {
         if (firstNameInput.value.trim().length < 2) { errors.push('First name must be at least 2 characters'); isValid = false; }
         if (surnameInput.value.trim().length < 2) { errors.push('Surname must be at least 2 characters'); isValid = false; }
@@ -528,13 +500,6 @@
       return { isValid, errors };
     }
 
-    function showStatus(message, isError = false) {
-      statusMessage.textContent = message;
-      statusMessage.className = `mt-6 text-center font-mono text-sm ${isError ? 'text-[var(--error)]' : 'text-[var(--success)]'}`;
-      statusMessage.classList.remove('hidden');
-    }
-
-    // ✅ REAL Form Submission to FastAPI
     form.addEventListener('submit', async function(e) {
       e.preventDefault();
 
@@ -543,8 +508,6 @@
         showStatus(errors.join('. '), true);
         return;
       }
-
-      const base = normalizeBaseUrl(apiBaseUrl.value);
 
       submitBtn.disabled = true;
       submitBtn.innerHTML = `
@@ -565,7 +528,7 @@
           timestamp: new Date().toISOString()
         };
 
-        const resp = await fetch(base + "/api/report", {
+        const resp = await fetch(API_BASE_URL + "/api/report", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(formData)
@@ -574,14 +537,13 @@
         const data = await resp.json().catch(() => ({}));
 
         if (!resp.ok || !data.ok) {
-          showStatus("Delivery failed. Check API URL and Render logs / env vars.", true);
+          showStatus("Delivery failed. Please try again later.", true);
           return;
         }
 
         successOverlay.classList.add('visible');
-
       } catch (err) {
-        showStatus("Network error. Is your Render backend online and correct URL?", true);
+        showStatus("Network error. Please try again later.", true);
       } finally {
         submitBtn.disabled = false;
         submitBtn.innerHTML = `
@@ -597,9 +559,6 @@
 
       setTimeout(() => {
         form.reset();
-        // keep API URL saved
-        apiBaseUrl.value = localStorage.getItem("REPORT_API_BASE_URL") || "";
-
         anonymousToggle.checked = false;
         charCountEl.textContent = '0';
         charCountContainer.classList.remove('warning');
