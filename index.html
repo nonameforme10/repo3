@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Contact Transmission</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@300;400;500;600&display=swap" rel="stylesheet">
+
+  <!-- Tailwind CDN -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Lucide Icons -->
+  <script src="https://unpkg.com/lucide@latest/dist/umd/lucide.js"></script>
+
+  <style>
+    :root {
+      --bg-primary: #0D0D12;
+      --bg-secondary: #13131A;
+      --bg-card: #1A1A24;
+      --fg-primary: #E8E8EC;
+      --fg-secondary: #8A8A9A;
+      --fg-muted: #4A4A5A;
+      --accent-primary: #00F0FF;
+      --accent-glow: rgba(0, 240, 255, 0.15);
+      --accent-hover: #00D4E0;
+      --border-subtle: #2A2A3A;
+      --error: #FF4757;
+      --success: #00FF88;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+
+    body {
+      font-family: 'Space Grotesk', sans-serif;
+      background-color: var(--bg-primary);
+      color: var(--fg-primary);
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    .bg-grid {
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(var(--border-subtle) 1px, transparent 1px),
+        linear-gradient(90deg, var(--border-subtle) 1px, transparent 1px);
+      background-size: 60px 60px;
+      opacity: 0.3;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .bg-noise {
+      position: fixed;
+      inset: 0;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E");
+      opacity: 0.03;
+      pointer-events: none;
+      z-index: 1;
+    }
+    .bg-gradient {
+      position: fixed;
+      inset: 0;
+      background:
+        radial-gradient(ellipse 80% 50% at 50% -20%, var(--accent-glow), transparent),
+        radial-gradient(ellipse 60% 40% at 100% 100%, rgba(0, 100, 255, 0.05), transparent);
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .font-mono { font-family: 'JetBrains Mono', monospace; }
+    .text-label {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      font-weight: 500;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--fg-secondary);
+    }
+
+    .form-container {
+      position: relative;
+      z-index: 10;
+      background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-secondary) 100%);
+      border: 1px solid var(--border-subtle);
+    }
+    .form-container::before {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      background: linear-gradient(135deg, var(--accent-primary), transparent 50%);
+      opacity: 0;
+      transition: opacity 0.4s ease;
+      z-index: -1;
+    }
+    .form-container:hover::before { opacity: 0.1; }
+
+    .input-field {
+      width: 100%;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      color: var(--fg-primary);
+      padding: 1rem 1rem 1rem 3rem;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 1rem;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .input-field::placeholder { color: var(--fg-muted); }
+    .input-field:focus {
+      outline: none;
+      border-color: var(--accent-primary);
+      box-shadow:
+        0 0 0 3px var(--accent-glow),
+        0 0 20px var(--accent-glow),
+        inset 0 0 20px rgba(0, 240, 255, 0.03);
+    }
+    .input-field:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      background: var(--bg-secondary);
+    }
+
+    .select-field {
+      appearance: none;
+      cursor: pointer;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%238A8A9A' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 1rem center;
+      padding-right: 3rem;
+    }
+    .select-field:focus {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%2300F0FF' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+    }
+
+    .textarea-field {
+      min-height: 180px;
+      resize: vertical;
+      line-height: 1.6;
+    }
+
+    .toggle-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      cursor: pointer;
+      user-select: none;
+    }
+    .toggle-track {
+      position: relative;
+      width: 56px;
+      height: 28px;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-subtle);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toggle-track::before {
+      content: '';
+      position: absolute;
+      top: 3px;
+      left: 3px;
+      width: 20px;
+      height: 20px;
+      background: var(--fg-secondary);
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toggle-input { position: absolute; opacity: 0; width: 0; height: 0; }
+    .toggle-input:checked + .toggle-track {
+      background: var(--accent-glow);
+      border-color: var(--accent-primary);
+      box-shadow: 0 0 20px var(--accent-glow);
+    }
+    .toggle-input:checked + .toggle-track::before {
+      transform: translateX(28px);
+      background: var(--accent-primary);
+      box-shadow: 0 0 10px var(--accent-primary);
+    }
+    .toggle-input:focus-visible + .toggle-track {
+      outline: 2px solid var(--accent-primary);
+      outline-offset: 2px;
+    }
+
+    .submit-btn {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      padding: 1.25rem 2rem;
+      background: transparent;
+      border: 1px solid var(--accent-primary);
+      color: var(--accent-primary);
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.875rem;
+      font-weight: 700;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      cursor: pointer;
+      overflow: hidden;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .submit-btn::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: var(--accent-primary);
+      transform: translateX(-101%);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .submit-btn:hover { color: var(--bg-primary); box-shadow: 0 0 30px var(--accent-glow); }
+    .submit-btn:hover::before { transform: translateX(0); }
+    .submit-btn:active { transform: scale(0.98); }
+    .submit-btn:focus-visible { outline: 2px solid var(--accent-primary); outline-offset: 4px; }
+    .submit-btn span, .submit-btn svg, .submit-btn i { position: relative; z-index: 1; }
+
+    .field-group { transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1); }
+    .field-group.anonymous-hidden {
+      opacity: 0.3;
+      transform: translateY(-10px);
+      pointer-events: none;
+    }
+    .field-group.anonymous-hidden .input-field,
+    .field-group.anonymous-hidden .select-field { opacity: 0.3; }
+
+    @keyframes fadeSlideIn {
+      from { opacity: 0; transform: translateY(20px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes glowPulse {
+      0%, 100% { box-shadow: 0 0 20px var(--accent-glow); }
+      50% { box-shadow: 0 0 40px var(--accent-glow), 0 0 60px rgba(0, 240, 255, 0.1); }
+    }
+    .animate-in { animation: fadeSlideIn 0.6s cubic-bezier(0.4, 0, 0.2, 1) forwards; opacity: 0; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
+    .delay-7 { animation-delay: 0.7s; }
+
+    .success-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(13, 13, 18, 0.95);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      opacity: 0;
+      visibility: hidden;
+      transition: all 0.4s ease;
+    }
+    .success-overlay.visible { opacity: 1; visibility: visible; }
+    .success-content {
+      text-align: center;
+      transform: scale(0.9);
+      transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .success-overlay.visible .success-content { transform: scale(1); }
+
+    .icon-container {
+      position: absolute;
+      left: 1rem;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--fg-muted);
+      transition: color 0.3s ease;
+      pointer-events: none;
+    }
+    .input-wrapper:focus-within .icon-container { color: var(--accent-primary); }
+    .icon-container.textarea-icon { top: 1.25rem; transform: none; }
+
+    .char-counter {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: var(--fg-muted);
+      text-align: right;
+      margin-top: 0.5rem;
+      transition: color 0.3s ease;
+    }
+    .char-counter.warning { color: var(--error); }
+  </style>
+</head>
+
+<body class="antialiased">
+  <div class="bg-grid"></div>
+  <div class="bg-noise"></div>
+  <div class="bg-gradient"></div>
+
+  <main class="relative z-10 min-h-screen flex items-center justify-center px-4 py-12 md:py-20">
+    <div class="w-full max-w-2xl">
+
+      <header class="mb-10 animate-in">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-2 h-2 bg-[var(--accent-primary)] animate-pulse"></div>
+          <span class="font-mono text-xs tracking-widest text-[var(--fg-muted)] uppercase">Secure Channel</span>
+        </div>
+        <h1 class="font-mono text-4xl md:text-5xl font-bold tracking-tight text-[var(--fg-primary)] mb-3">
+          Contact Transmission
+        </h1>
+        <p class="text-[var(--fg-secondary)] text-lg leading-relaxed">
+          Send a message through our encrypted channel. Your identity is protected.
+        </p>
+      </header>
+
+      <div class="form-container p-6 md:p-10">
+        <form id="contactForm" novalidate>
+
+          <!-- ✅ NEW: API URL -->
+          <div class="mb-8 pb-8 border-b border-[var(--border-subtle)] animate-in delay-1">
+            <label for="apiBaseUrl" class="text-label block mb-3">API Endpoint (Render URL)</label>
+            <div class="input-wrapper relative">
+              <div class="icon-container">
+                <i data-lucide="link" class="w-5 h-5"></i>
+              </div>
+              <input
+                type="url"
+                id="apiBaseUrl"
+                class="input-field"
+                placeholder="https://your-backend.onrender.com"
+                autocomplete="off"
+              >
+            </div>
+            <p class="mt-3 text-xs text-[var(--fg-muted)] font-mono">
+              Example: https://report-telegram-api.onrender.com (no trailing slash)
+            </p>
+          </div>
+
+          <!-- Anonymous Toggle -->
+          <div class="mb-8 pb-8 border-b border-[var(--border-subtle)] animate-in delay-2">
+            <label class="toggle-container group">
+              <input type="checkbox" id="anonymousToggle" class="toggle-input" aria-describedby="anonymousDesc">
+              <div class="toggle-track" aria-hidden="true"></div>
+              <div class="flex items-center gap-3">
+                <i data-lucide="ghost" class="w-5 h-5 text-[var(--fg-secondary)] group-hover:text-[var(--accent-primary)] transition-colors"></i>
+                <div>
+                  <span class="font-mono text-sm font-medium text-[var(--fg-primary)]">Anonymous Mode</span>
+                  <p id="anonymousDesc" class="text-xs text-[var(--fg-muted)] mt-0.5">Hide your identity for this transmission</p>
+                </div>
+              </div>
+            </label>
+          </div>
+
+          <div id="personalFields" class="space-y-6 mb-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div class="field-group animate-in delay-3">
+                <label for="firstName" class="text-label block mb-3">First Name</label>
+                <div class="input-wrapper relative">
+                  <div class="icon-container"><i data-lucide="user" class="w-5 h-5"></i></div>
+                  <input type="text" id="firstName" name="firstName" class="input-field" placeholder="Enter first name" autocomplete="given-name">
+                </div>
+              </div>
+
+              <div class="field-group animate-in delay-4">
+                <label for="surname" class="text-label block mb-3">Surname</label>
+                <div class="input-wrapper relative">
+                  <div class="icon-container"><i data-lucide="user" class="w-5 h-5"></i></div>
+                  <input type="text" id="surname" name="surname" class="input-field" placeholder="Enter surname" autocomplete="family-name">
+                </div>
+              </div>
+            </div>
+
+            <div class="field-group animate-in delay-5">
+              <label for="group" class="text-label block mb-3">Group / Cohort</label>
+              <div class="input-wrapper relative">
+                <div class="icon-container"><i data-lucide="users" class="w-5 h-5"></i></div>
+                <select id="group" name="group" class="input-field select-field">
+                  <option value="">Select your group</option>
+                  <option value="alpha">Alpha Squad</option>
+                  <option value="beta">Beta Unit</option>
+                  <option value="gamma">Gamma Force</option>
+                  <option value="delta">Delta Team</option>
+                  <option value="omega">Omega Division</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <div class="animate-in delay-6 mb-8">
+            <label for="message" class="text-label block mb-3">Message</label>
+            <div class="input-wrapper relative">
+              <div class="icon-container textarea-icon"><i data-lucide="message-square" class="w-5 h-5"></i></div>
+              <textarea
+                id="message"
+                name="message"
+                class="input-field textarea-field"
+                placeholder="Type your message here... (minimum 20 characters)"
+                maxlength="2000"
+                required
+                aria-describedby="charCount"
+              ></textarea>
+            </div>
+            <div id="charCount" class="char-counter">
+              <span id="currentChars">0</span> / 2000
+            </div>
+          </div>
+
+          <div class="animate-in delay-7">
+            <button type="submit" class="submit-btn" id="submitBtn">
+              <i data-lucide="send" class="w-5 h-5"></i>
+              <span>Transmit Message</span>
+            </button>
+          </div>
+
+          <div id="statusMessage" class="mt-6 text-center font-mono text-sm hidden"></div>
+        </form>
+      </div>
+
+      <footer class="mt-8 text-center animate-in delay-7">
+        <p class="text-xs text-[var(--fg-muted)] font-mono tracking-wide">
+          All transmissions are encrypted end-to-end
+        </p>
+      </footer>
+    </div>
+  </main>
+
+  <div id="successOverlay" class="success-overlay">
+    <div class="success-content">
+      <div class="w-20 h-20 mx-auto mb-6 flex items-center justify-center" style="animation: glowPulse 2s infinite;">
+        <i data-lucide="check-circle-2" class="w-16 h-16 text-[var(--success)]"></i>
+      </div>
+      <h2 class="font-mono text-2xl font-bold text-[var(--fg-primary)] mb-2">Transmission Successful</h2>
+      <p class="text-[var(--fg-secondary)] mb-8">Your message has been securely delivered.</p>
+      <button id="resetBtn" class="submit-btn" style="width: auto; padding: 1rem 2rem;">
+        <span>Send Another</span>
+      </button>
+    </div>
+  </div>
+
+  <script>
+    lucide.createIcons();
+
+    const form = document.getElementById('contactForm');
+    const apiBaseUrl = document.getElementById('apiBaseUrl');
+
+    const anonymousToggle = document.getElementById('anonymousToggle');
+    const personalFields = document.getElementById('personalFields');
+    const firstNameInput = document.getElementById('firstName');
+    const surnameInput = document.getElementById('surname');
+    const groupSelect = document.getElementById('group');
+    const messageTextarea = document.getElementById('message');
+    const charCountEl = document.getElementById('currentChars');
+    const charCountContainer = document.getElementById('charCount');
+    const submitBtn = document.getElementById('submitBtn');
+    const statusMessage = document.getElementById('statusMessage');
+    const successOverlay = document.getElementById('successOverlay');
+    const resetBtn = document.getElementById('resetBtn');
+
+    const fieldGroups = personalFields.querySelectorAll('.field-group');
+
+    // ✅ Save API URL to localStorage
+    apiBaseUrl.value = localStorage.getItem("REPORT_API_BASE_URL") || "";
+    apiBaseUrl.addEventListener("input", () => {
+      localStorage.setItem("REPORT_API_BASE_URL", apiBaseUrl.value.trim());
+    });
+
+    function normalizeBaseUrl(u) {
+      u = (u || "").trim();
+      if (!u) return "";
+      if (u.endsWith("/")) u = u.slice(0, -1);
+      return u;
+    }
+
+    anonymousToggle.addEventListener('change', function() {
+      const isAnonymous = this.checked;
+
+      fieldGroups.forEach((group, index) => {
+        setTimeout(() => {
+          if (isAnonymous) {
+            group.classList.add('anonymous-hidden');
+            setTimeout(() => {
+              const input = group.querySelector('input, select');
+              if (input) input.disabled = true;
+            }, 300);
+          } else {
+            const input = group.querySelector('input, select');
+            if (input) input.disabled = false;
+            group.classList.remove('anonymous-hidden');
+          }
+        }, index * 100);
+      });
+
+      firstNameInput.setAttribute('aria-hidden', isAnonymous);
+      surnameInput.setAttribute('aria-hidden', isAnonymous);
+      groupSelect.setAttribute('aria-hidden', isAnonymous);
+    });
+
+    messageTextarea.addEventListener('input', function() {
+      const currentLength = this.value.length;
+      charCountEl.textContent = currentLength;
+
+      if (currentLength > 1800) charCountContainer.classList.add('warning');
+      else charCountContainer.classList.remove('warning');
+    });
+
+    function validateForm() {
+      let isValid = true;
+      const errors = [];
+
+      // ✅ API URL required
+      const base = normalizeBaseUrl(apiBaseUrl.value);
+      if (!base.startsWith("http://") && !base.startsWith("https://")) {
+        errors.push('API Endpoint must start with https://');
+        isValid = false;
+      }
+
+      if (!anonymousToggle.checked) {
+        if (firstNameInput.value.trim().length < 2) { errors.push('First name must be at least 2 characters'); isValid = false; }
+        if (surnameInput.value.trim().length < 2) { errors.push('Surname must be at least 2 characters'); isValid = false; }
+        if (!groupSelect.value) { errors.push('Please select your group'); isValid = false; }
+      }
+
+      if (messageTextarea.value.trim().length < 20) { errors.push('Message must be at least 20 characters'); isValid = false; }
+
+      return { isValid, errors };
+    }
+
+    function showStatus(message, isError = false) {
+      statusMessage.textContent = message;
+      statusMessage.className = `mt-6 text-center font-mono text-sm ${isError ? 'text-[var(--error)]' : 'text-[var(--success)]'}`;
+      statusMessage.classList.remove('hidden');
+    }
+
+    // ✅ REAL Form Submission to FastAPI
+    form.addEventListener('submit', async function(e) {
+      e.preventDefault();
+
+      const { isValid, errors } = validateForm();
+      if (!isValid) {
+        showStatus(errors.join('. '), true);
+        return;
+      }
+
+      const base = normalizeBaseUrl(apiBaseUrl.value);
+
+      submitBtn.disabled = true;
+      submitBtn.innerHTML = `
+        <svg class="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="12" cy="12" r="10" stroke-opacity="0.25"></circle>
+          <path d="M12 2a10 10 0 0 1 10 10" stroke-linecap="round"></path>
+        </svg>
+        <span>Transmitting...</span>
+      `;
+
+      try {
+        const formData = {
+          isAnonymous: anonymousToggle.checked,
+          firstName: anonymousToggle.checked ? null : firstNameInput.value.trim(),
+          surname: anonymousToggle.checked ? null : surnameInput.value.trim(),
+          group: anonymousToggle.checked ? null : groupSelect.value,
+          message: messageTextarea.value.trim(),
+          timestamp: new Date().toISOString()
+        };
+
+        const resp = await fetch(base + "/api/report", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(formData)
+        });
+
+        const data = await resp.json().catch(() => ({}));
+
+        if (!resp.ok || !data.ok) {
+          showStatus("Delivery failed. Check API URL and Render logs / env vars.", true);
+          return;
+        }
+
+        successOverlay.classList.add('visible');
+
+      } catch (err) {
+        showStatus("Network error. Is your Render backend online and correct URL?", true);
+      } finally {
+        submitBtn.disabled = false;
+        submitBtn.innerHTML = `
+          <i data-lucide="send" class="w-5 h-5"></i>
+          <span>Transmit Message</span>
+        `;
+        lucide.createIcons();
+      }
+    });
+
+    resetBtn.addEventListener('click', function() {
+      successOverlay.classList.remove('visible');
+
+      setTimeout(() => {
+        form.reset();
+        // keep API URL saved
+        apiBaseUrl.value = localStorage.getItem("REPORT_API_BASE_URL") || "";
+
+        anonymousToggle.checked = false;
+        charCountEl.textContent = '0';
+        charCountContainer.classList.remove('warning');
+        statusMessage.classList.add('hidden');
+
+        fieldGroups.forEach(group => {
+          group.classList.remove('anonymous-hidden');
+          const input = group.querySelector('input, select');
+          if (input) input.disabled = false;
+        });
+      }, 400);
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && successOverlay.classList.contains('visible')) {
+        resetBtn.click();
+      }
+    });
+  </script>
+</body>
+</html>
